@@ -5,9 +5,26 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeftIcon } from "react-native-heroicons/solid";
 import { useNavigation } from "@react-navigation/native";
 import { AppScreenNavigationProp } from "../app.d";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  RegisterUserInput,
+  registerUserSchema,
+} from "../schema/auth/register.schema";
 
 export default function SignUpScreen() {
   const navigation = useNavigation<AppScreenNavigationProp>();
+  const {
+    register,
+    setValue,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<RegisterUserInput>({
+    resolver: zodResolver(registerUserSchema),
+    mode: "all",
+  });
   return (
     <View
       className="flex-1 bg-white"
@@ -35,11 +52,20 @@ export default function SignUpScreen() {
       >
         <View className="form space-y-2">
           <Text className="text-gray-700 mx-4 font-semibold">Full Name</Text>
-          <TextInput
-            className="p-4 bg-gray-100 text-gray-700 rounded-2xl mx-3 mb-4"
-            // value="john@gmail.com"
-            placeholder="Enter Full Name"
-          ></TextInput>
+          <Controller
+            control={control}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                className="p-4 bg-gray-100 text-gray-700 rounded-2xl mx-3 mb-4"
+                placeholder="Enter Name"
+                onChangeText={onChange}
+                value={value}
+                onBlur={onBlur}
+              ></TextInput>
+            )}
+            name="email"
+            rules={{ required: true }}
+          />
           <Text className="text-gray-700 mx-4 font-semibold">
             Email Address
           </Text>
