@@ -5,26 +5,55 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeftIcon } from "react-native-heroicons/solid";
 import { useNavigation } from "@react-navigation/native";
 import { AppScreenNavigationProp } from "../app.d";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   RegisterUserInput,
   registerUserSchema,
 } from "../schema/auth/register.schema";
+import RNDateTimePicker from "@react-native-community/datetimepicker";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "../api/api-client";
+import Toast from "react-native-toast-message";
+import { notifyMessage } from "../utils/toast-message";
 
 export default function SignUpScreen() {
   const navigation = useNavigation<AppScreenNavigationProp>();
   const {
     register,
     setValue,
-    handleSubmit,
     control,
-    reset,
+    handleSubmit,
     formState: { errors },
   } = useForm<RegisterUserInput>({
     resolver: zodResolver(registerUserSchema),
     mode: "all",
   });
+
+  const { mutate, isPending } = useMutation({
+    mutationKey: ["register-user"],
+    mutationFn: (data: RegisterUserInput) => api.post("/auth/register", data),
+    onSuccess: (data: any) => {
+      notifyMessage(
+        data?.data?.message || "Registered Successfully",
+        "success"
+      );
+      navigation.navigate("Login");
+    },
+    onError: (error: any) => {
+      notifyMessage(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Something Went Wrong",
+        "error"
+      );
+    },
+  });
+
+  const onSubmit: SubmitHandler<RegisterUserInput> = (data) => {
+    mutate(data);
+  };
+
   return (
     <View
       className="flex-1 bg-white"
@@ -52,45 +81,127 @@ export default function SignUpScreen() {
       >
         <View className="form space-y-2">
           <Text className="text-gray-700 mx-4 font-semibold">Full Name</Text>
-          <Controller
-            control={control}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="p-4 bg-gray-100 text-gray-700 rounded-2xl mx-3 mb-4"
-                placeholder="Enter Name"
-                onChangeText={onChange}
-                value={value}
-                onBlur={onBlur}
-              ></TextInput>
-            )}
-            name="email"
-            rules={{ required: true }}
-          />
+
+          <View className="mx-4 mb-1">
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  placeholder="Enter your Full Name"
+                  onChangeText={onChange}
+                  value={value}
+                  onBlur={onBlur}
+                ></TextInput>
+              )}
+              name="name"
+              rules={{ required: true }}
+            />
+            <Text className="text-red-500 text-[12px]">
+              {errors.name?.message}
+            </Text>
+          </View>
+          <View className="mx-4 mb-1">
+            <Controller
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <View className="flex flex-row items-center space-x-4">
+                  <Text className="text-gray-700 font-semibold">
+                    Birth Date
+                  </Text>
+                  <RNDateTimePicker
+                    value={value || new Date()}
+                    onChange={(event, date) => {
+                      onChange(date);
+                    }}
+                    display="default"
+                  />
+                </View>
+              )}
+              name="dob"
+              rules={{ required: true }}
+            />
+            <Text className="text-red-500 text-[12px]">
+              {errors.dob?.message}
+            </Text>
+          </View>
           <Text className="text-gray-700 mx-4 font-semibold">
             Email Address
           </Text>
-          <TextInput
-            className="p-4 bg-gray-100 text-gray-700 rounded-2xl mx-3 mb-4"
-            // value="john@gmail.com"
-            placeholder="Enter Email"
-          ></TextInput>
+          <View className="mx-4 mb-1">
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  placeholder="Enter your email"
+                  onChangeText={onChange}
+                  value={value}
+                  onBlur={onBlur}
+                ></TextInput>
+              )}
+              name="email"
+              rules={{ required: true }}
+            />
+            <Text className="text-red-500 text-[12px]">
+              {errors.email?.message}
+            </Text>
+          </View>
           <Text className="text-gray-700 mx-4 font-semibold">Password</Text>
-          <TextInput
-            className="p-4 bg-gray-100 text-gray-700 rounded-2xl mx-3 mb-2"
-            secureTextEntry
-            // value="test12345"
-            placeholder="Enter Password"
-          ></TextInput>
+          <View className="mx-4 mb-1">
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  placeholder="Enter your Password"
+                  onChangeText={onChange}
+                  value={value}
+                  onBlur={onBlur}
+                ></TextInput>
+              )}
+              name="password"
+              rules={{ required: true }}
+            />
+            <Text className="text-red-500 text-[12px]">
+              {errors.password?.message}
+            </Text>
+          </View>
+          {/* <Text className="text-gray-700 mx-4 font-semibold">
+            Confirm Password
+          </Text>
+          <View className="mx-4 mb-2">
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  placeholder="Enter your confirm password"
+                  onChangeText={onChange}
+                  value={value}
+                  onBlur={onBlur}
+                ></TextInput>
+              )}
+              name="cpassword"
+              rules={{ required: true }}
+            />
+            <Text className="text-red-500 text-[12px]">
+              {errors.password?.message}
+            </Text>
+          </View> */}
           <TouchableOpacity className="flex items-end mx-3 mb-6">
             <Text className="text-gray-700">Forget Password?</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="mx-3 py-3 bg-yellow-400 rounded-xl">
+          <TouchableOpacity
+            className="mx-3 py-3 bg-yellow-400 rounded-xl"
+            onPress={handleSubmit(onSubmit)}
+          >
             <Text className="text-xl font-bold text-center text-gray-700">
               Sign Up
             </Text>
           </TouchableOpacity>
         </View>
-        <Text className="text-xl text-gray-700 font-bold py-5 text-center">
+        {/* <Text className="text-xl text-gray-700 font-bold py-5 text-center">
           Or
         </Text>
         <View className="flex-row justify-center space-x-12">
@@ -112,7 +223,7 @@ export default function SignUpScreen() {
               className="w-10 h-10"
             />
           </TouchableOpacity>
-        </View>
+        </View> */}
         <View className="flex-row justify-center space-x-1 mt-10">
           <Text className="text-gray-500 font-semibold">
             Already have an account?
