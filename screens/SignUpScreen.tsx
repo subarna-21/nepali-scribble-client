@@ -14,15 +14,13 @@ import {
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../api/api-client";
-import Toast from "react-native-toast-message";
 import { notifyMessage } from "../utils/toast-message";
 
 export default function SignUpScreen() {
   const navigation = useNavigation<AppScreenNavigationProp>();
   const {
-    register,
-    setValue,
     control,
+    reset,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterUserInput>({
@@ -38,6 +36,7 @@ export default function SignUpScreen() {
         data?.data?.message || "Registered Successfully",
         "success"
       );
+      reset();
       navigation.navigate("Login");
     },
     onError: (error: any) => {
@@ -138,6 +137,7 @@ export default function SignUpScreen() {
                   onChangeText={onChange}
                   value={value}
                   onBlur={onBlur}
+                  secureTextEntry
                 ></TextInput>
               )}
               name="email"
@@ -193,8 +193,11 @@ export default function SignUpScreen() {
             <Text className="text-gray-700">Forget Password?</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className="mx-3 py-3 bg-yellow-400 rounded-xl"
+            className={`mx-3 py-3 bg-yellow-400 rounded-xl ${
+              isPending ? "opacity-50" : "opacity-100"
+            }`}
             onPress={handleSubmit(onSubmit)}
+            disabled={isPending}
           >
             <Text className="text-xl font-bold text-center text-gray-700">
               Sign Up

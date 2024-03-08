@@ -28,7 +28,8 @@
     "react-native-screens": "~3.22.0",
     "react-native-simple-toast": "^3.3.0",
     "react-native-toast-message": "^2.2.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "expo-secure-store": "~12.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

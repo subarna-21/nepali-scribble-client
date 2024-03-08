@@ -5,9 +5,49 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeftIcon } from "react-native-heroicons/solid";
 import { useNavigation } from "@react-navigation/native";
 import { AppScreenNavigationProp } from "../app.d";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { LoginUserInput, loginUserSchema } from "../schema/auth/login.schema";
+import { useMutation } from "@tanstack/react-query";
+import { notifyMessage } from "../utils/toast-message";
+import { api } from "../api/api-client";
+import * as SecureStorage from "expo-secure-store";
 
 export default function LoginScreen() {
   const navigation = useNavigation<AppScreenNavigationProp>();
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<LoginUserInput>({
+    resolver: zodResolver(loginUserSchema),
+    mode: "all",
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationKey: ["login-user"],
+    mutationFn: (data: LoginUserInput) => api.post("/auth/login", data),
+    onSuccess: async (data: any) => {
+      notifyMessage(data?.data?.message || "Logged In Successfully", "success");
+      reset();
+      await SecureStorage.setItemAsync("token", data?.data?.data);
+    },
+    onError: (error: any) => {
+      notifyMessage(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Something Went Wrong",
+        "error"
+      );
+    },
+  });
+
+  const onSubmit: SubmitHandler<LoginUserInput> = (data) => {
+    mutate(data);
+  };
+
   return (
     <View
       className="flex-1 bg-white"
@@ -37,22 +77,56 @@ export default function LoginScreen() {
           <Text className="text-gray-700 mx-4 font-semibold">
             Email Address
           </Text>
-          <TextInput
-            className="p-4 bg-gray-100 text-gray-700 rounded-2xl mx-3 mb-4"
-            value="john@gmail.com"
-            placeholder="Enter Email"
-          ></TextInput>
+          <View className="mx-4 mb-1">
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  placeholder="Enter your email"
+                  onChangeText={onChange}
+                  value={value}
+                  onBlur={onBlur}
+                ></TextInput>
+              )}
+              name="email"
+              rules={{ required: true }}
+            />
+            <Text className="text-red-500 text-[12px]">
+              {errors.email?.message}
+            </Text>
+          </View>
           <Text className="text-gray-700 mx-4 font-semibold">Password</Text>
-          <TextInput
-            className="p-4 bg-gray-100 text-gray-700 rounded-2xl mx-3 mb-2"
-            secureTextEntry
-            value="test12345"
-            placeholder="Enter Email"
-          ></TextInput>
+          <View className="mx-4 mb-1">
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  placeholder="Enter your Password"
+                  onChangeText={onChange}
+                  value={value}
+                  onBlur={onBlur}
+                  secureTextEntry
+                ></TextInput>
+              )}
+              name="password"
+              rules={{ required: true }}
+            />
+            <Text className="text-red-500 text-[12px]">
+              {errors.password?.message}
+            </Text>
+          </View>
           <TouchableOpacity className="flex items-end mx-3 mb-6">
             <Text className="text-gray-700">Forget Password?</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="mx-3 py-3 bg-yellow-400 rounded-xl">
+          <TouchableOpacity
+            className={`mx-3 py-3 bg-yellow-400 rounded-xl ${
+              isPending ? "opacity-50" : "opacity-100"
+            }`}
+            onPress={handleSubmit(onSubmit)}
+            disabled={isPending}
+          >
             <Text className="text-xl font-bold text-center text-gray-700">
               Login
             </Text>

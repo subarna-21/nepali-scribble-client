@@ -1,9 +1,11 @@
-import { StatusBar } from "expo-status-bar";
-import { Text, View } from "react-native";
 import "./app.d";
 import AppNavigation from "./navigation/AppNavigation";
-
+import { AuthProvider } from "./contexts/AuthContext";
 
 export default function App() {
-  return <AppNavigation />;
+  return (
+    <AuthProvider>
+      <AppNavigation />
+    </AuthProvider>
+  );
 }
