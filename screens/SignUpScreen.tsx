@@ -67,12 +67,12 @@ export default function SignUpScreen() {
             <ArrowLeftIcon size="20" color="black" />
           </TouchableOpacity>
         </View>
-        <View className="flex-row justify-center">
+        {/* <View className="flex-row justify-center">
           <Image
             source={require("../assets/images/signup.png")}
             style={{ width: 200, height: 110 }}
           />
-        </View>
+        </View> */}
       </SafeAreaView>
       <View
         className="flex-1 bg-white px-8 pt-8"
@@ -81,12 +81,12 @@ export default function SignUpScreen() {
         <View className="form space-y-2">
           <Text className="text-gray-700 mx-4 font-semibold">Full Name</Text>
 
-          <View className="mx-4 mb-1">
+          <View className="mx-4">
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-2xl mb-1"
                   placeholder="Enter your Full Name"
                   onChangeText={onChange}
                   value={value}
@@ -100,44 +100,19 @@ export default function SignUpScreen() {
               {errors.name?.message}
             </Text>
           </View>
-          <View className="mx-4 mb-1">
-            <Controller
-              control={control}
-              render={({ field: { onChange, value } }) => (
-                <View className="flex flex-row items-center space-x-4">
-                  <Text className="text-gray-700 font-semibold">
-                    Birth Date
-                  </Text>
-                  <RNDateTimePicker
-                    value={value || new Date()}
-                    onChange={(event, date) => {
-                      onChange(date);
-                    }}
-                    display="default"
-                  />
-                </View>
-              )}
-              name="dob"
-              rules={{ required: true }}
-            />
-            <Text className="text-red-500 text-[12px]">
-              {errors.dob?.message}
-            </Text>
-          </View>
           <Text className="text-gray-700 mx-4 font-semibold">
             Email Address
           </Text>
-          <View className="mx-4 mb-1">
+          <View className="mx-4">
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-2xl mb-1"
                   placeholder="Enter your email"
                   onChangeText={onChange}
                   value={value}
                   onBlur={onBlur}
-                  secureTextEntry
                 ></TextInput>
               )}
               name="email"
@@ -148,16 +123,17 @@ export default function SignUpScreen() {
             </Text>
           </View>
           <Text className="text-gray-700 mx-4 font-semibold">Password</Text>
-          <View className="mx-4 mb-1">
+          <View className="mx-4">
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-2xl mb-1"
                   placeholder="Enter your Password"
                   onChangeText={onChange}
                   value={value}
                   onBlur={onBlur}
+                  secureTextEntry
                 ></TextInput>
               )}
               name="password"
@@ -167,7 +143,7 @@ export default function SignUpScreen() {
               {errors.password?.message}
             </Text>
           </View>
-          {/* <Text className="text-gray-700 mx-4 font-semibold">
+          <Text className="text-gray-700 mx-4 font-semibold">
             Confirm Password
           </Text>
           <View className="mx-4 mb-2">
@@ -175,20 +151,21 @@ export default function SignUpScreen() {
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-1"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-2xl mb-1"
                   placeholder="Enter your confirm password"
                   onChangeText={onChange}
                   value={value}
                   onBlur={onBlur}
+                  secureTextEntry
                 ></TextInput>
               )}
               name="cpassword"
               rules={{ required: true }}
             />
             <Text className="text-red-500 text-[12px]">
-              {errors.password?.message}
+              {errors.cpassword?.message}
             </Text>
-          </View> */}
+          </View>
           <TouchableOpacity className="flex items-end mx-3 mb-6">
             <Text className="text-gray-700">Forget Password?</Text>
           </TouchableOpacity>

@@ -16,3 +16,18 @@ export type AppScreenNavigationProp = NativeStackScreenProps<
   SignUp,
   Welcome
 >;
+
+export type TabNavigatorParamList = {
+  Home: undefined;
+  Dashboard: undefined;
+  Profile: undefined;
+  Learn;
+};
+
+export type TabScreenNavigationProp = NativeStackScreenProps<
+  HomeStackNavigatorParamList,
+  Home,
+  Dashboard,
+  Profile,
+  Learn
+>;

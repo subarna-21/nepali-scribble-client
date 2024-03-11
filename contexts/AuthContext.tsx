@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStorage from "expo-secure-store";
 import axios from "axios";
+import { api } from "../api/api-client";
 
 interface AuthStateProps {
   token: string | null;
@@ -27,12 +28,12 @@ export const AuthProvider = ({ children }: any) => {
       try {
         const token = await SecureStorage.getItemAsync("token");
 
-        if (token) {
+        if (token && token !== "") {
           setAuthState({
             token,
             authenticated: true,
           });
-          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         } else {
           setAuthState({
             token: null,
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }: any) => {
     };
 
     loadToken();
-  }, []);
+  });
 
   const value = {
     ...authState,
