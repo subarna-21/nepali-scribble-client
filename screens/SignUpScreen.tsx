@@ -67,12 +67,12 @@ export default function SignUpScreen() {
             <ArrowLeftIcon size="20" color="black" />
           </TouchableOpacity>
         </View>
-        {/* <View className="flex-row justify-center">
+        <View className="flex-row justify-center">
           <Image
             source={require("../assets/images/signup.png")}
             style={{ width: 200, height: 110 }}
           />
-        </View> */}
+        </View>
       </SafeAreaView>
       <View
         className="flex-1 bg-white px-8 pt-8"

@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance } from "axios";
 import * as SecureStorage from "expo-secure-store";
 
 export const api: AxiosInstance = axios.create({
-  baseURL: "http://192.168.1.161:5001/api",
+  baseURL: "http://192.168.1.106:5001/api",
 });
 
 api.interceptors.response.use(
