@@ -1,6 +1,13 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
-import { Button, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  Button,
+  Image,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -16,8 +23,10 @@ import {
 import { api } from "../api/api-client";
 import { useMutation } from "@tanstack/react-query";
 import { notifyMessage } from "../utils/toast-message";
-import { decode as atob } from "base-64";
+import { decode as atob, encode as btoa } from "base-64";
 import axios from "axios";
+import * as SecureStorage from "expo-secure-store";
+import ReactNativeBlobUtil from "react-native-blob-util";
 
 interface IPath {
   segments: String[];
@@ -33,14 +42,14 @@ export default function DrawingScreen() {
   // const [paths, setPaths] = useState<IPath[]>([]);
   const [currentPath, setCurrentPath] = useState<IPath>({
     segments: [],
-    color: "#000",
+    color: "#fff",
   });
   const [allPaths, setAllPaths] = useState<IPath[]>([]);
   const [mementoStack, setMementoStack] = useState<Memento[]>([]);
 
   const pan = Gesture.Pan()
     .onStart((g) => {
-      setCurrentPath({ segments: [`M ${g.x} ${g.y}`], color: "#000" });
+      setCurrentPath({ segments: [`M ${g.x} ${g.y}`], color: "#fff" });
     })
     .onUpdate((g) => {
       setCurrentPath((prevPath) => {
@@ -85,22 +94,20 @@ export default function DrawingScreen() {
     mutationFn: async () => {
       const image = canvasRef.current?.makeImageSnapshot();
 
+      // console.log(image?.encodeToBase64());
+
       if (!image) throw new Error("No image");
 
       try {
-        const file = b64toBlob(
-          image.encodeToBase64(ImageFormat.PNG),
-          "image/png"
-        );
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        console.log(formData);
-
-        const res = await api.post("/progress", formData);
-
-        console.log(res);
+        // const file = b64toBlob(
+        //   image.encodeToBase64(ImageFormat.PNG),
+        //   "image/png"
+        // );
+        // const formData = new FormData();
+        // formData.append("file", file);
+        // console.log(formData);
+        // const res = await api.post("/progress", formData);
+        // console.log(res);
       } catch (err) {
         console.log(err);
       }
@@ -115,27 +122,6 @@ export default function DrawingScreen() {
     },
   });
 
-  const b64toBlob = (b64Data: string, contentType = "", sliceSize = 512) => {
-    const byteCharacters = atob(b64Data);
-    const byteArrays = [];
-
-    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-      const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-      const byteNumbers = new Array(slice.length);
-      for (let i = 0; i < slice.length; i++) {
-        byteNumbers[i] = slice.charCodeAt(i);
-      }
-
-      const byteArray = new Uint8Array(byteNumbers);
-      byteArrays.push(byteArray);
-    }
-
-    const blob = new Blob(byteArrays, { type: contentType });
-    console.log(blob, "1");
-    return blob;
-  };
-
   const handleSubmit = async () => {
     // mutate(); // Trigger the mutation
     const image = canvasRef.current?.makeImageSnapshot();
@@ -145,20 +131,43 @@ export default function DrawingScreen() {
     try {
       const base64 = image.encodeToBase64(ImageFormat.PNG);
 
-      const res = await fetch("data:image/png;base64," + base64);
+      console.log(base64);
 
-      console.log(res);
+      // const fd = new FormData();
+      // fd.append("file", blob);
 
-      const blob = await res.blob();
+      // // const base64 = image.encodeToBase64(ImageFormat.PNG);
+      const token = await SecureStorage.getItemAsync("token");
+      // console.log("Token: ", token);
 
-      const fd = new FormData();
-      const file = new File([blob], "filename.png", { type: "image/png" });
-      fd.append("file", file);
+      const res = await ReactNativeBlobUtil.fetch(
+        "POST",
+        "http://192.168.88.13:5001/api/progress",
+        {
+          // method: "POST",
+          // headers: {
+          //   // Accept: "application/json",
+          // },
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+        [
+          {
+            name: "file",
+            filename: "image.png",
+            type: "image/png",
+            data: base64,
+          },
+        ]
+      );
+
+      console.log(res.data?.message);
+
+      // console.log(response);
     } catch (er) {
       console.log(er);
     }
   };
-
   return (
     <View className="flex flex-col w-full h-full">
       <Image
@@ -170,7 +179,10 @@ export default function DrawingScreen() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <GestureDetector gesture={pan}>
               <View style={{ flex: 1 }}>
-                <Canvas style={{ flex: 8 }} ref={canvasRef}>
+                <Canvas
+                  style={{ flex: 1, backgroundColor: "black" }}
+                  ref={canvasRef}
+                >
                   {allPaths.map((p, index) => (
                     <Path
                       key={index}
