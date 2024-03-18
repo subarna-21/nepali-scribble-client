@@ -23,7 +23,7 @@ import DrawingScreen from "../screens/DrawingScreen";
 
 const Stack = createNativeStackNavigator<AppNavigatorParamList>();
 const Tab = createBottomTabNavigator<TabNavigatorParamList>();
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 export default function AppNavigation() {
   const { authenticated } = useAuth();

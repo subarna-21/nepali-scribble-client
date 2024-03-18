@@ -94,22 +94,35 @@ export default function DrawingScreen() {
     mutationFn: async () => {
       const image = canvasRef.current?.makeImageSnapshot();
 
-      // console.log(image?.encodeToBase64());
-
       if (!image) throw new Error("No image");
 
       try {
-        // const file = b64toBlob(
-        //   image.encodeToBase64(ImageFormat.PNG),
-        //   "image/png"
-        // );
-        // const formData = new FormData();
-        // formData.append("file", file);
-        // console.log(formData);
-        // const res = await api.post("/progress", formData);
-        // console.log(res);
-      } catch (err) {
-        console.log(err);
+        const base64 = image.encodeToBase64(ImageFormat.PNG);
+
+        const token = await SecureStorage.getItemAsync("token");
+
+        const res = await ReactNativeBlobUtil.fetch(
+          "POST",
+          "http://192.168.1.106:5001/api/progress",
+          {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+          [
+            {
+              name: "file",
+              filename: "image.png",
+              type: "image/png",
+              data: base64,
+            },
+          ]
+        );
+
+        console.log(res.data?.message);
+
+        // console.log(response);
+      } catch (er) {
+        console.log(er);
       }
     },
     onSuccess: async (data: any) => {
@@ -123,50 +136,7 @@ export default function DrawingScreen() {
   });
 
   const handleSubmit = async () => {
-    // mutate(); // Trigger the mutation
-    const image = canvasRef.current?.makeImageSnapshot();
-
-    if (!image) throw new Error("No image");
-
-    try {
-      const base64 = image.encodeToBase64(ImageFormat.PNG);
-
-      console.log(base64);
-
-      // const fd = new FormData();
-      // fd.append("file", blob);
-
-      // // const base64 = image.encodeToBase64(ImageFormat.PNG);
-      const token = await SecureStorage.getItemAsync("token");
-      // console.log("Token: ", token);
-
-      const res = await ReactNativeBlobUtil.fetch(
-        "POST",
-        "http://192.168.88.13:5001/api/progress",
-        {
-          // method: "POST",
-          // headers: {
-          //   // Accept: "application/json",
-          // },
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-        [
-          {
-            name: "file",
-            filename: "image.png",
-            type: "image/png",
-            data: base64,
-          },
-        ]
-      );
-
-      console.log(res.data?.message);
-
-      // console.log(response);
-    } catch (er) {
-      console.log(er);
-    }
+    mutate(); // Trigger the mutation
   };
   return (
     <View className="flex flex-col w-full h-full">
@@ -187,14 +157,14 @@ export default function DrawingScreen() {
                     <Path
                       key={index}
                       path={p.segments.join(" ")}
-                      strokeWidth={5}
+                      strokeWidth={8}
                       style="stroke"
                       color={p.color}
                     />
                   ))}
                   <Path
                     path={currentPath.segments.join(" ")}
-                    strokeWidth={5}
+                    strokeWidth={8}
                     style="stroke"
                     color={currentPath.color}
                   />

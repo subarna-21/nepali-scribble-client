@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   StyleSheet,
@@ -9,14 +10,89 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as SecureStorage from "expo-secure-store";
 import { notifyMessage } from "../utils/toast-message";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { api } from "../api/api-client";
+import LoadingScreen from "./LoadingScreen";
+import * as ImagePicker from "expo-image-picker";
+import { queryClient } from "../navigation/AppNavigation";
+import { useEffect, useState } from "react";
+
+type ProfileResponseDto = {
+  data: {
+    data: {
+      id: number;
+      name: string;
+      email: string;
+      image: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  };
+};
 
 export default function ProfileScreen() {
+  const [profile, setProfile] = useState<
+    ProfileResponseDto["data"]["data"] | null
+  >(null);
+  const { data, isPending } = useQuery<ProfileResponseDto>({
+    queryKey: ["profile"],
+    queryFn: () => api.get("/profile"),
+  });
+
   const handleLogout = async () => {
     await SecureStorage.deleteItemAsync("token");
 
     notifyMessage("Logged Out Successfully", "success");
   };
-  return (
+
+  useEffect(() => {
+    if (data?.data.data) {
+      setProfile(data?.data?.data);
+    }
+  }, [data]);
+
+  // image uploading
+  const imageUploadingQuery = useMutation({
+    mutationKey: ["profile/image"],
+    mutationFn: (result: ImagePicker.ImagePickerSuccessResult) => {
+      const formData = new FormData();
+      formData.append("file", {
+        name: result.assets[0].uri.split("/").pop() || "image.jpg",
+        type: result.assets[0].mimeType,
+        uri: result.assets[0].uri,
+      } as any);
+
+      return api.put("/profile/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["profile"],
+      });
+    },
+  });
+
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+
+      quality: 1,
+    });
+
+    if (result.canceled) return;
+
+    imageUploadingQuery.mutate(result);
+  };
+
+  return isPending ? (
+    <LoadingScreen />
+  ) : (
     <View className="flex flex-col w-full">
       <View className="relative h-[400px]">
         <Image
@@ -29,14 +105,43 @@ export default function ProfileScreen() {
               Welcome
             </Text>
             <Text className="font-semibold text-2xl text-center text-white capitalize">
-              Rojan Rana Magar
+              {profile?.name}
             </Text>
           </View>
           <View>
-            <Image
-              source={require("../assets/profile.png")}
-              className="w-32 h-32"
-            />
+            {profile?.image ? (
+              <View className="w-32 h-32 rounded-full border-[1px] border-white flex items-center justify-center relative bg-[rgba(229,231,235,1)]">
+                <TouchableOpacity
+                  onPress={pickImage}
+                  className="absolute right-0 bottom-2 w-10 h-10 bg-white flex items-center justify-center z-[1] rounded-full opacity-90"
+                >
+                  <Text className="text-xl">+</Text>
+                </TouchableOpacity>
+                <View className="w-[110px] h-[110px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                  {imageUploadingQuery.isPending ? (
+                    <ActivityIndicator size="large" color="#0000ff" />
+                  ) : profile.image ? (
+                    <Image
+                      src={profile.image}
+                      className="w-32 h-32 object-center object-cover"
+                      width={128}
+                      height={128}
+                      progressiveRenderingEnabled
+                    />
+                  ) : (
+                    <Image
+                      source={require("../assets/profile.png")}
+                      className="w-full h-full"
+                    />
+                  )}
+                </View>
+              </View>
+            ) : (
+              <Image
+                source={require("../assets/profile.png")}
+                className="w-full h-full"
+              />
+            )}
           </View>
         </SafeAreaView>
       </View>
