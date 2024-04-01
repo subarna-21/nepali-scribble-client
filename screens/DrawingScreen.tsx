@@ -20,13 +20,13 @@ import {
   SkImage,
   useCanvasRef,
 } from "@shopify/react-native-skia";
-import { api } from "../api/api-client";
-import { useMutation } from "@tanstack/react-query";
+import api from "../api/api-client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { notifyMessage } from "../utils/toast-message";
-import { decode as atob, encode as btoa } from "base-64";
-import axios from "axios";
 import * as SecureStorage from "expo-secure-store";
 import ReactNativeBlobUtil from "react-native-blob-util";
+import LoadingScreen from "./LoadingScreen";
+import { queryClient } from "../navigation/AppNavigation";
 
 interface IPath {
   segments: String[];
@@ -37,19 +37,34 @@ interface Memento {
   paths: IPath[];
 }
 
+type ProgressResponseDto = {
+  data: {
+    data: {
+      id?: number;
+      char: string;
+      completed?: string;
+      input?: string;
+      image?: string | null;
+      accuracy?: number;
+      createdAt?: string;
+      updatedAt?: string;
+    };
+  };
+};
+
 export default function DrawingScreen() {
   const canvasRef = useCanvasRef();
   // const [paths, setPaths] = useState<IPath[]>([]);
   const [currentPath, setCurrentPath] = useState<IPath>({
     segments: [],
-    color: "#fff",
+    color: "#000",
   });
   const [allPaths, setAllPaths] = useState<IPath[]>([]);
   const [mementoStack, setMementoStack] = useState<Memento[]>([]);
 
   const pan = Gesture.Pan()
     .onStart((g) => {
-      setCurrentPath({ segments: [`M ${g.x} ${g.y}`], color: "#fff" });
+      setCurrentPath({ segments: [`M ${g.x} ${g.y}`], color: "#000" });
     })
     .onUpdate((g) => {
       setCurrentPath((prevPath) => {
@@ -89,6 +104,12 @@ export default function DrawingScreen() {
     }
   };
 
+  const progressQuery = useQuery<ProgressResponseDto>({
+    queryKey: ["progress/current"],
+    queryFn: () => api.get("/progress/current"),
+    staleTime: 60 * 1000,
+  });
+
   const { mutate, isPending } = useMutation({
     mutationKey: ["create-progress"],
     mutationFn: async () => {
@@ -99,11 +120,11 @@ export default function DrawingScreen() {
       try {
         const base64 = image.encodeToBase64(ImageFormat.PNG);
 
-        const token = await SecureStorage.getItemAsync("token");
+        const token = SecureStorage.getItem("token");
 
         const res = await ReactNativeBlobUtil.fetch(
           "POST",
-          "http://192.168.1.106:5001/api/progress",
+          "http://192.168.1.102:5001/api/progress",
           {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`,
@@ -118,39 +139,95 @@ export default function DrawingScreen() {
           ]
         );
 
-        console.log(res.data?.message);
+        const data = await res.json();
 
-        // console.log(response);
+        if (!data?.status) {
+          notifyMessage(data?.message || "Something Went Wrong", "error");
+          queryClient.invalidateQueries({
+            queryKey: ["progress/current"],
+          });
+          return;
+        }
+
+        notifyMessage(
+          "You have successfully submitted the drawing with accuracy: " +
+            data?.data?.accuracy || "0%",
+          "success"
+        );
+        handleClearPaths();
+        queryClient.invalidateQueries({
+          queryKey: ["progress/current"],
+        });
       } catch (er) {
-        console.log(er);
+        notifyMessage("Something Went Wrong", "error");
+        queryClient.invalidateQueries({
+          queryKey: ["progress/current"],
+        });
       }
     },
-    onSuccess: async (data: any) => {
-      // Handle success
-      // console.log(data.data.data);
-    },
-    onError: (error: any) => {
-      // Handle error
-      console.log(error);
-    },
+    // onSuccess: async (data: any) => {
+    //   console.log(data.data.status);
+    //   notifyMessage(data?.data?.message || "Submitted Successfully", "success");
+    //   queryClient.invalidateQueries({
+    //     queryKey: ["progress/current"],
+    //   });
+    // },
+    // onError: (error: any) => {
+    //   // Handle error
+    //   console.log(error);
+    // },
   });
+
+  const progress = progressQuery.data?.data.data;
 
   const handleSubmit = async () => {
     mutate(); // Trigger the mutation
   };
-  return (
+  return progressQuery.isPending ? (
+    <LoadingScreen />
+  ) : (
     <View className="flex flex-col w-full h-full">
-      <Image
-        source={require("../assets/background.png")}
-        className="w-full z-[-1] h-[200px]"
-      />
+      <View className="w-full h-[200px] bg-primary">
+        <SafeAreaView className="flex flex-col gap-y-8">
+          <Text className="text-3xl font-semibold text-gray-200 text-center mt-8">
+            Learning
+          </Text>
+          <View className="px-8 flex-col gap-y-2">
+            <Text className="text-xl font-semibold text-gray-200">
+              Draw{"    "}
+              <Text className="text-yellow-400 text-4xl">
+                "{progress?.char}"
+              </Text>
+            </Text>
+            {progress?.accuracy && (
+              <Text className="text-xl font-semibold text-gray-200">
+                Accuracy:{"   "}
+                <Text className="text-yellow-400 text-4xl">
+                  "{progress?.accuracy}"
+                </Text>
+              </Text>
+            )}
+            {progress?.updatedAt && (
+              <Text className="text-xl font-semibold text-gray-200">
+                Last Attempt At:{"   "}
+                <Text className="text-yellow-400 text-4xl">
+                  "{new Date(progress.updatedAt).toDateString()}"
+                </Text>
+              </Text>
+            )}
+          </View>
+        </SafeAreaView>
+      </View>
       <View className="flex mx-8 mt-4">
-        <View className="flex h-[380px] rounded-md bg-gray-200">
+        <Text className="text-3xl font-semibold text-gray-800 mb-2">
+          Draw Here!
+        </Text>
+        <View className="flex h-[380px] bg-gray-200 rounded-xl overflow-hidden">
           <GestureHandlerRootView style={{ flex: 1 }}>
             <GestureDetector gesture={pan}>
               <View style={{ flex: 1 }}>
                 <Canvas
-                  style={{ flex: 1, backgroundColor: "black" }}
+                  style={{ flex: 1, backgroundColor: "white" }}
                   ref={canvasRef}
                 >
                   {allPaths.map((p, index) => (
@@ -173,7 +250,7 @@ export default function DrawingScreen() {
             </GestureDetector>
           </GestureHandlerRootView>
         </View>
-        <View className="flex flex-row items-center justify-between mt-4">
+        <View className="flex flex-row items-center gap-x-2 mt-4">
           <TouchableOpacity
             onPress={handleClearPaths}
             className="w-32 rounded-lg flex items-center py-2 bg-primary"
@@ -187,12 +264,14 @@ export default function DrawingScreen() {
             <Text className="text-gray-200 font-semibold">Undo</Text>
           </TouchableOpacity>
         </View>
-        <View className="flex flex-row items-center justify-between mt-4">
+        <View className="flex flex-row items-center justify-center mt-8">
           <TouchableOpacity
             onPress={handleSubmit}
-            className="w-32 rounded-lg flex items-center py-2 bg-primary"
+            className="px-12 py-4 rounded-lg flex items-center bg-slate-700"
           >
-            <Text className="text-gray-200 font-semibold">Submit</Text>
+            <Text className="text-gray-200 font-semibold" disabled={isPending}>
+              Submit
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

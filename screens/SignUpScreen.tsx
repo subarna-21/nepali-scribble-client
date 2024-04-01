@@ -13,7 +13,7 @@ import {
 } from "../schema/auth/register.schema";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { useMutation } from "@tanstack/react-query";
-import { api } from "../api/api-client";
+import api from "../api/api-client";
 import { notifyMessage } from "../utils/toast-message";
 
 export default function SignUpScreen() {

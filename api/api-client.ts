@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import * as SecureStorage from "expo-secure-store";
 
-export const api: AxiosInstance = axios.create({
-  baseURL: "http://192.168.1.106:5001/api",
+const api: AxiosInstance = axios.create({
+  baseURL: "http://192.168.1.102:5001/api",
 });
 
 api.interceptors.response.use(
@@ -10,9 +10,11 @@ api.interceptors.response.use(
     return res;
   },
   async (err: AxiosError) => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 || err.response?.status === 403) {
       await SecureStorage.deleteItemAsync("token");
-      return Promise.reject(err);
     }
+    return Promise.reject(err);
   }
 );
+
+export default api;

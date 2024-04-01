@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as SecureStorage from "expo-secure-store";
 import { notifyMessage } from "../utils/toast-message";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { api } from "../api/api-client";
+import api from "../api/api-client";
 import LoadingScreen from "./LoadingScreen";
 import * as ImagePicker from "expo-image-picker";
 import { queryClient } from "../navigation/AppNavigation";
@@ -24,8 +24,8 @@ type ProfileResponseDto = {
       name: string;
       email: string;
       image: string | null;
-      createdAt: Date;
-      updatedAt: Date;
+      createdAt: string;
+      updatedAt: string;
     };
   };
 };
@@ -90,7 +90,7 @@ export default function ProfileScreen() {
     imageUploadingQuery.mutate(result);
   };
 
-  return isPending ? (
+  return isPending || !profile ? (
     <LoadingScreen />
   ) : (
     <View className="flex flex-col w-full">
@@ -145,12 +145,40 @@ export default function ProfileScreen() {
           </View>
         </SafeAreaView>
       </View>
-      <TouchableOpacity
-        className="mb-4 p-4 flex items-center justify-center w-full bg-white rounded-xl"
-        onPress={handleLogout}
-      >
-        <Text className="text-gray-700 font-semibold">Logout</Text>
-      </TouchableOpacity>
+      <View className="flex flex-col gap-y-8 px-8">
+        <View className="flex flex-col gap-y-4">
+          <View className="flex flex-row gap-x-4">
+            <Text className="text-gray-700 font-semibold text-lg">Name:</Text>
+            <Text className="text-gray-700 text-lg capitalize">
+              {profile?.name}
+            </Text>
+          </View>
+          <View className="flex flex-row gap-x-4">
+            <Text className="text-gray-700 font-semibold text-lg">Email:</Text>
+            <Text className="text-gray-700 text-lg">{profile?.email}</Text>
+          </View>
+          <View className="flex flex-row gap-x-4">
+            <Text className="text-gray-700 font-semibold text-lg">Joined:</Text>
+            <Text className="text-gray-700 text-lg">
+              {new Date(profile.createdAt).toDateString()}
+            </Text>
+          </View>
+          <View className="flex flex-row gap-x-4">
+            <Text className="text-gray-700 font-semibold text-lg">
+              Updated:
+            </Text>
+            <Text className="text-gray-700 text-lg">
+              {new Date(profile.updatedAt).toDateString()}
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          className="mb-4 p-4 flex items-center justify-center w-full bg-white rounded-xl"
+          onPress={handleLogout}
+        >
+          <Text className="text-gray-700 font-semibold text-lg">Logout</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

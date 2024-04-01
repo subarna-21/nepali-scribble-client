@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginUserInput, loginUserSchema } from "../schema/auth/login.schema";
 import { useMutation } from "@tanstack/react-query";
 import { notifyMessage } from "../utils/toast-message";
-import { api } from "../api/api-client";
+import api from "../api/api-client";
 import * as SecureStorage from "expo-secure-store";
 
 export default function LoginScreen() {

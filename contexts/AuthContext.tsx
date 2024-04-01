@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStorage from "expo-secure-store";
 import axios from "axios";
-import { api } from "../api/api-client";
+import api from "../api/api-client";
 
 interface AuthStateProps {
   token: string | null;
