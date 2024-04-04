@@ -40,7 +40,8 @@
     "zod": "^3.22.4",
     "expo-dev-client": "~3.3.10",
     "react-native-svg": "14.1.0",
-    "expo-image-picker": "~14.7.1"
+    "expo-image-picker": "~14.7.1",
+    "expo-updates": "~0.24.12"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

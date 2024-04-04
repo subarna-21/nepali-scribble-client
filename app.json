@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "client",
+    "name": "Nepali Scribble",
     "slug": "client",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -46,6 +46,12 @@
       "eas": {
         "projectId": "56ae469f-d596-41dc-876e-5c8125e18c4b"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/56ae469f-d596-41dc-876e-5c8125e18c4b"
     }
   }
 }
