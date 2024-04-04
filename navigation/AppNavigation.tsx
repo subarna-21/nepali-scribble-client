@@ -87,7 +87,7 @@ export const TabNavigator = () => {
           ),
         })}
       ></Tab.Screen>
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={({ route }) => ({
@@ -99,7 +99,7 @@ export const TabNavigator = () => {
             <Ionicons name="home" color={color} size={size} />
           ),
         })}
-      ></Tab.Screen>
+      ></Tab.Screen> */}
       <Tab.Screen
         name="Learn"
         component={DrawingScreen}
