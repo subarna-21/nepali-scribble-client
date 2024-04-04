@@ -20,6 +20,7 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import ProfileScreen from "../screens/ProfileScreen";
 import DrawingScreen from "../screens/DrawingScreen";
+import DashboardScreen from "../screens/DashboardScreen";
 
 const Stack = createNativeStackNavigator<AppNavigatorParamList>();
 const Tab = createBottomTabNavigator<TabNavigatorParamList>();
@@ -75,7 +76,7 @@ export const TabNavigator = () => {
     >
       <Tab.Screen
         name="Dashboard"
-        component={HomeScreen}
+        component={DashboardScreen}
         options={({ route }) => ({
           tabBarStyle: {
             display: getTabBarVisibility(route),
