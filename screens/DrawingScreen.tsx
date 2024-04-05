@@ -112,7 +112,7 @@ export default function DrawingScreen() {
 
   const { mutate, isPending } = useMutation({
     mutationKey: ["create-progress"],
-    mutationFn: async () => {
+    mutationFn: () => {
       const image = canvasRef.current?.makeImageSnapshot();
 
       if (!image) throw new Error("No image");
@@ -120,63 +120,105 @@ export default function DrawingScreen() {
       try {
         const base64 = image.encodeToBase64(ImageFormat.PNG);
 
-        const token = SecureStorage.getItem("token");
+        const formData = new FormData();
+        formData.append("file", {
+          name: "image.png",
+          type: "image/png",
+          uri: `data:image/png;base64,${base64}`,
+        } as any);
 
-        const res = await ReactNativeBlobUtil.fetch(
-          "POST",
-          "http://192.168.1.102:5001/api/progress",
-          {
+        return api.put("/progress", formData, {
+          headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
           },
-          [
-            {
-              name: "file",
-              filename: "image.png",
-              type: "image/png",
-              data: base64,
-            },
-          ]
-        );
-
-        const data = await res.json();
-
-        if (!data?.status) {
-          notifyMessage(data?.message || "Something Went Wrong", "error");
-          queryClient.invalidateQueries({
-            queryKey: ["progress/current"],
-          });
-          return;
-        }
-
-        notifyMessage(
-          "You have successfully submitted the drawing with accuracy: " +
-            data?.data?.accuracy || "0%",
-          "success"
-        );
-        handleClearPaths();
-        queryClient.invalidateQueries({
-          queryKey: ["progress/current"],
         });
       } catch (er) {
         notifyMessage("Something Went Wrong", "error");
         queryClient.invalidateQueries({
           queryKey: ["progress/current"],
         });
+
+        return Promise.reject(er);
       }
     },
-    // onSuccess: async (data: any) => {
-    //   console.log(data.data.status);
-    //   notifyMessage(data?.data?.message || "Submitted Successfully", "success");
-    //   queryClient.invalidateQueries({
-    //     queryKey: ["progress/current"],
-    //   });
-    // },
-    // onError: (error: any) => {
-    //   // Handle error
-    //   console.log(error);
-    // },
+    onSuccess: async (data: any) => {
+      notifyMessage(data?.data?.message || "Submitted Successfully", "success");
+      queryClient.invalidateQueries({
+        queryKey: ["progress/current"],
+      });
+    },
+    onError: (error: any) => {
+      notifyMessage("Something Went Wrong", "error");
+    },
   });
+
+  // const { mutate, isPending } = useMutation({
+  //   mutationKey: ["create-progress"],
+  //   mutationFn: async () => {
+  //     const image = canvasRef.current?.makeImageSnapshot();
+
+  //     if (!image) throw new Error("No image");
+
+  //     try {
+  //       const base64 = image.encodeToBase64(ImageFormat.PNG);
+
+  //       const token = SecureStorage.getItem("token");
+
+  //       const res = await ReactNativeBlobUtil.fetch(
+  //         "POST",
+  //         "http://192.168.1.102:5001/api/progress",
+  //         {
+  //           "Content-Type": "multipart/form-data",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         [
+  //           {
+  //             name: "file",
+  //             filename: "image.png",
+  //             type: "image/png",
+  //             data: base64,
+  //           },
+  //         ]
+  //       );
+
+  //       const data = await res.json();
+
+  //       if (!data?.status) {
+  //         notifyMessage(data?.message || "Something Went Wrong", "error");
+  //         queryClient.invalidateQueries({
+  //           queryKey: ["progress/current"],
+  //         });
+  //         return;
+  //       }
+
+  //       notifyMessage(
+  //         "You have successfully submitted the drawing with accuracy: " +
+  //           data?.data?.accuracy || "0%",
+  //         "success"
+  //       );
+  //       handleClearPaths();
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["progress/current"],
+  //       });
+  //     } catch (er) {
+  //       notifyMessage("Something Went Wrong", "error");
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["progress/current"],
+  //       });
+  //     }
+  //   },
+  // onSuccess: async (data: any) => {
+  //   console.log(data.data.status);
+  //   notifyMessage(data?.data?.message || "Submitted Successfully", "success");
+  //   queryClient.invalidateQueries({
+  //     queryKey: ["progress/current"],
+  //   });
+  // },
+  // onError: (error: any) => {
+  //   // Handle error
+  //   console.log(error);
+  // },
+  // });
 
   const progress = progressQuery.data?.data.data;
 
