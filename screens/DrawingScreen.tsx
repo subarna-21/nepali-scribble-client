@@ -127,7 +127,7 @@ export default function DrawingScreen() {
           uri: `data:image/png;base64,${base64}`,
         } as any);
 
-        return api.put("/progress", formData, {
+        return api.post("/progress", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
