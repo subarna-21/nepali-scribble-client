@@ -74,7 +74,7 @@ export default function LoginScreen() {
           </View>
         </SafeAreaView>
         <View
-          className="flex-1 bg-white px-8 pt-8"
+          className="flex-1 bg-white px-8 pt-4"
           style={{ borderTopLeftRadius: 50, borderTopRightRadius: 50 }}
         >
           <View className="form space-y-2">
@@ -121,7 +121,7 @@ export default function LoginScreen() {
                 {errors.password?.message}
               </Text>
             </View>
-            <TouchableOpacity className="flex items-end mx-3 mb-6">
+            <TouchableOpacity className="flex items-end mx-3 mb-2">
               <Text className="text-gray-700">Forget Password?</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -136,10 +136,10 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-          <Text className="text-xl text-gray-700 font-bold py-5 text-center">
+          {/* <Text className="text-xl text-gray-700 font-bold py-5 text-center">
             Or
-          </Text>
-          <View className="flex-row justify-center space-x-12">
+          </Text> */}
+          {/* <View className="flex-row justify-center space-x-12">
             <TouchableOpacity className="p-2 bg-gray-100 rounded-xl">
               <Image
                 source={require("../assets/icons/google.png")}
@@ -158,8 +158,8 @@ export default function LoginScreen() {
                 className="w-10 h-10"
               />
             </TouchableOpacity>
-          </View>
-          <View className="flex-row justify-center space-x-1 mt-10">
+          </View> */}
+          <View className="flex-row justify-center space-x-1 mt-2">
             <Text className="text-gray-500 font-semibold">
               Don't have an account?
             </Text>
