@@ -1,13 +1,6 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
-import {
-  Button,
-  Image,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -17,16 +10,14 @@ import {
   Canvas,
   ImageFormat,
   Path,
-  SkImage,
   useCanvasRef,
 } from "@shopify/react-native-skia";
 import api from "../api/api-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { notifyMessage } from "../utils/toast-message";
-import * as SecureStorage from "expo-secure-store";
-import ReactNativeBlobUtil from "react-native-blob-util";
 import LoadingScreen from "./LoadingScreen";
 import { queryClient } from "../navigation/AppNavigation";
+import { StatusBar } from "expo-status-bar";
 
 interface IPath {
   segments: String[];
@@ -142,13 +133,27 @@ export default function DrawingScreen() {
       }
     },
     onSuccess: async (data: any) => {
-      notifyMessage(data?.data?.message || "Submitted Successfully", "success");
+      notifyMessage(
+        "You have successfully submitted the drawing with accuracy: " +
+          data?.data?.data?.accuracy || "0%",
+        "success"
+      );
       queryClient.invalidateQueries({
         queryKey: ["progress/current"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["progress"],
+      });
     },
     onError: (error: any) => {
-      notifyMessage("Something Went Wrong", "error");
+      notifyMessage(
+        (error?.response?.data?.message || "Something Went Wrong") +
+          "! Please try again",
+        "error"
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["progress"],
+      });
     },
   });
 
@@ -228,95 +233,101 @@ export default function DrawingScreen() {
   return progressQuery.isPending ? (
     <LoadingScreen />
   ) : (
-    <View className="flex flex-col w-full h-full">
-      <View className="w-full h-[200px] bg-primary">
-        <SafeAreaView className="flex flex-col gap-y-8">
-          <Text className="text-3xl font-semibold text-gray-200 text-center mt-8">
-            Learning
-          </Text>
-          <View className="px-8 flex-col gap-y-2">
-            <Text className="text-xl font-semibold text-gray-200">
-              Draw{"    "}
-              <Text className="text-yellow-400 text-4xl">
-                "{progress?.char}"
-              </Text>
+    <>
+      <StatusBar backgroundColor="transparent" translucent={true} />
+      <View className="flex flex-col w-full h-full">
+        <View className="w-full h-[140px] bg-primary">
+          <SafeAreaView className="flex flex-col gap-y-4">
+            <Text className="text-3xl font-semibold text-gray-200 text-center mt-8">
+              Learning
             </Text>
-            {progress?.accuracy && (
+            <View className="px-8 flex-col gap-y-2">
               <Text className="text-xl font-semibold text-gray-200">
-                Accuracy:{"   "}
+                Draw{"    "}
                 <Text className="text-yellow-400 text-4xl">
-                  "{progress?.accuracy}"
+                  "{progress?.char}"
                 </Text>
               </Text>
-            )}
-            {progress?.updatedAt && (
-              <Text className="text-xl font-semibold text-gray-200">
-                Last Attempt At:{"   "}
-                <Text className="text-yellow-400 text-4xl">
-                  "{new Date(progress.updatedAt).toDateString()}"
+              {progress?.accuracy && (
+                <Text className="text-xl font-semibold text-gray-200">
+                  Accuracy:{"   "}
+                  <Text className="text-yellow-400 text-4xl">
+                    "{progress?.accuracy}"
+                  </Text>
                 </Text>
-              </Text>
-            )}
-          </View>
-        </SafeAreaView>
-      </View>
-      <View className="flex mx-8 mt-4">
-        <Text className="text-3xl font-semibold text-gray-800 mb-2">
-          Draw Here!
-        </Text>
-        <View className="flex h-[380px] bg-gray-200 rounded-xl overflow-hidden">
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <GestureDetector gesture={pan}>
-              <View style={{ flex: 1 }}>
-                <Canvas
-                  style={{ flex: 1, backgroundColor: "white" }}
-                  ref={canvasRef}
-                >
-                  {allPaths.map((p, index) => (
+              )}
+              {progress?.updatedAt && (
+                <Text className="text-xl font-semibold text-gray-200">
+                  Last Attempt At:{"   "}
+                  <Text className="text-yellow-400 text-4xl">
+                    "{new Date(progress.updatedAt).toDateString()}"
+                  </Text>
+                </Text>
+              )}
+            </View>
+          </SafeAreaView>
+        </View>
+        <View className="flex mx-8 mt-4">
+          <Text className="text-3xl font-semibold text-gray-800 mb-2">
+            Draw Here!
+          </Text>
+          <View className="flex h-[300px] bg-gray-200 rounded-xl overflow-hidden">
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <GestureDetector gesture={pan}>
+                <View style={{ flex: 1 }}>
+                  <Canvas
+                    style={{ flex: 1, backgroundColor: "white" }}
+                    ref={canvasRef}
+                  >
+                    {allPaths.map((p, index) => (
+                      <Path
+                        key={index}
+                        path={p.segments.join(" ")}
+                        strokeWidth={8}
+                        style="stroke"
+                        color={p.color}
+                      />
+                    ))}
                     <Path
-                      key={index}
-                      path={p.segments.join(" ")}
+                      path={currentPath.segments.join(" ")}
                       strokeWidth={8}
                       style="stroke"
-                      color={p.color}
+                      color={currentPath.color}
                     />
-                  ))}
-                  <Path
-                    path={currentPath.segments.join(" ")}
-                    strokeWidth={8}
-                    style="stroke"
-                    color={currentPath.color}
-                  />
-                </Canvas>
-              </View>
-            </GestureDetector>
-          </GestureHandlerRootView>
-        </View>
-        <View className="flex flex-row items-center gap-x-2 mt-4">
-          <TouchableOpacity
-            onPress={handleClearPaths}
-            className="w-32 rounded-lg flex items-center py-2 bg-primary"
-          >
-            <Text className="text-gray-200 font-semibold">Clear</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={restoreFromMemento}
-            className="w-32 rounded-lg flex items-center py-2 bg-primary"
-          >
-            <Text className="text-gray-200 font-semibold">Undo</Text>
-          </TouchableOpacity>
-        </View>
-        <View className="flex flex-row items-center justify-center mt-8">
-          <TouchableOpacity
-            onPress={handleSubmit}
-            className="px-12 py-4 rounded-lg flex items-center bg-slate-700"
-          >
-            <Text className="text-gray-200 font-semibold" disabled={isPending}>
-              Submit
-            </Text>
-          </TouchableOpacity>
+                  </Canvas>
+                </View>
+              </GestureDetector>
+            </GestureHandlerRootView>
+          </View>
+          <View className="flex flex-row items-center gap-x-2 mt-4">
+            <TouchableOpacity
+              onPress={handleClearPaths}
+              className="w-32 rounded-lg flex items-center py-2 bg-primary"
+            >
+              <Text className="text-gray-200 font-semibold">Clear</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={restoreFromMemento}
+              className="w-32 rounded-lg flex items-center py-2 bg-primary"
+            >
+              <Text className="text-gray-200 font-semibold">Undo</Text>
+            </TouchableOpacity>
+          </View>
+          <View className="flex flex-row items-center justify-center mt-8">
+            <TouchableOpacity
+              onPress={handleSubmit}
+              className="px-12 py-4 rounded-lg flex items-center bg-slate-700"
+            >
+              <Text
+                className="text-gray-200 font-semibold"
+                disabled={isPending}
+              >
+                Submit
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
+    </>
   );
 }

@@ -1,9 +1,17 @@
-import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  RefreshControl,
+} from "react-native";
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "../api/api-client";
 import LoadingScreen from "./LoadingScreen";
+import { StatusBar } from "expo-status-bar";
+import { queryClient } from "../navigation/AppNavigation";
 
 type ProfileResponseDto = {
   data: {
@@ -35,6 +43,12 @@ type ProgressResponseDto = {
 };
 
 export default function DashboardScreen() {
+  const [deleteMode, setDeleteMode] = useState(false);
+  const onRefresh = React.useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["progress"],
+    });
+  }, []);
   const [data, setData] = useState<{
     id: string;
     char: string;
@@ -50,14 +64,38 @@ export default function DashboardScreen() {
     queryKey: ["profile"],
     queryFn: () => api.get("/profile"),
   });
-  const { data: progressData, isPending } = useQuery<ProgressResponseDto>({
+  const {
+    data: progressData,
+    isPending,
+    isRefetching,
+  } = useQuery<ProgressResponseDto>({
     queryKey: ["progress"],
     queryFn: () => api.get("/progress"),
   });
-  return isPending ? (
+  const { mutate } = useMutation({
+    mutationKey: ["progress/reset"],
+    mutationFn: () => api.delete("/progress"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["progress"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["progress/current"],
+      });
+    },
+  });
+  const onResetAllProgress = async () => {
+    setDeleteMode(false);
+    mutate();
+    queryClient.invalidateQueries({
+      queryKey: ["progress"],
+    });
+  };
+  return isPending || isRefetching ? (
     <LoadingScreen />
   ) : (
     <>
+      <StatusBar backgroundColor="transparent" translucent={true} />
       <View className="p-4 bg-slate-400">
         <View className="flex-row justify-center">
           <Image
@@ -69,14 +107,26 @@ export default function DashboardScreen() {
           Welcome {profileData?.data.data.name}
         </Text>
       </View>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
+        }
+      >
         <View className="mx-4 mt-4">
           <Text className="text-xl font-bold">Progress</Text>
-          <Text className="font-thin">Click to see the image</Text>
+          <View className="flex flex-row justify-between">
+            <Text className="font-thin">Click to see the image</Text>
+            <TouchableOpacity onPress={() => setDeleteMode(true)}>
+              <Text className="text-red-700">Reset All Progress</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <View className="flex flex-col gap-y-4 px-4 py-6">
           {progressData?.data.data.map((progress, index) => (
-            <View className="p-4 bg-slate-200 rounded-xl flex flex-row items-center justify-between">
+            <View
+              key={index}
+              className="p-4 bg-slate-200 rounded-xl flex flex-row items-center justify-between"
+            >
               <View className="flex flex-col gap-y-4">
                 <Text className="">
                   Char: <Text className="font-bold">{progress.char}</Text>
@@ -132,6 +182,32 @@ export default function DashboardScreen() {
               >
                 <Text className="text-slate-100">Close</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+      {deleteMode && (
+        <View className="w-full h-screen bg-black/20 absolute top-0 left-0">
+          <View className="relative w-full h-full flex items-center justify-center">
+            <View className="bg-white w-3/4 absolute rounded-xl p-4 flex flex-col gap-y-2">
+              <Text className="text-xl font-bold">Reset All Progress</Text>
+              <Text className="font-thin">
+                Are you sure you want to reset all progress?
+              </Text>
+              <View className="flex flex-row gap-x-2">
+                <TouchableOpacity
+                  onPress={() => setDeleteMode(false)}
+                  className="px-5 py-1 bg-slate-700 flex items-center justify-center rounded-md"
+                >
+                  <Text className="text-slate-100">No</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={onResetAllProgress}
+                  className="px-4 py-1 bg-red-700 flex items-center justify-center rounded-md"
+                >
+                  <Text className="text-slate-100">Yes</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
