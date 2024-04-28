@@ -154,6 +154,9 @@ export default function DrawingScreen() {
       queryClient.invalidateQueries({
         queryKey: ["progress"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["progress/current"],
+      });
     },
   });
 
@@ -236,38 +239,46 @@ export default function DrawingScreen() {
     <>
       <StatusBar backgroundColor="transparent" translucent={true} />
       <View className="flex flex-col w-full h-full">
-        <View className="w-full h-[140px] bg-primary">
+        <View className="w-full h-[200px] bg-primary">
           <SafeAreaView className="flex flex-col gap-y-4">
             <Text className="text-3xl font-semibold text-gray-200 text-center mt-8">
               Learning
             </Text>
             <View className="px-8 flex-col gap-y-2">
-              <Text className="text-xl font-semibold text-gray-200">
-                Draw{"    "}
-                <Text className="text-yellow-400 text-4xl">
-                  "{progress?.char}"
+              <View className="flex flex-row gap-x-4 items-center">
+                <Text className="text-xl font-semibold text-gray-200">
+                  Draw{"    "}
+                  <Text className="text-yellow-400">"{progress?.char}"</Text>
                 </Text>
-              </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    queryClient.invalidateQueries({
+                      queryKey: ["progress/current"],
+                    });
+                  }}
+                  className="p-1 border-[1px] w-[70px] rounded-xl flex items-center justify-center"
+                >
+                  <Text>Reload</Text>
+                </TouchableOpacity>
+              </View>
               {progress?.accuracy && (
                 <Text className="text-xl font-semibold text-gray-200">
                   Accuracy:{"   "}
-                  <Text className="text-yellow-400 text-4xl">
-                    "{progress?.accuracy}"
-                  </Text>
+                  <Text className="text-yellow-400">{progress?.accuracy}%</Text>
                 </Text>
               )}
               {progress?.updatedAt && (
                 <Text className="text-xl font-semibold text-gray-200">
                   Last Attempt At:{"   "}
-                  <Text className="text-yellow-400 text-4xl">
-                    "{new Date(progress.updatedAt).toDateString()}"
+                  <Text className="text-yellow-400">
+                    {new Date(progress.updatedAt).toDateString()}
                   </Text>
                 </Text>
               )}
             </View>
           </SafeAreaView>
         </View>
-        <View className="flex mx-8 mt-4">
+        <View className="flex mx-8 mt-2">
           <Text className="text-3xl font-semibold text-gray-800 mb-2">
             Draw Here!
           </Text>
@@ -299,7 +310,7 @@ export default function DrawingScreen() {
               </GestureDetector>
             </GestureHandlerRootView>
           </View>
-          <View className="flex flex-row items-center gap-x-2 mt-4">
+          <View className="flex flex-row items-center justify-center gap-x-2 mt-4">
             <TouchableOpacity
               onPress={handleClearPaths}
               className="w-32 rounded-lg flex items-center py-2 bg-primary"
@@ -316,14 +327,10 @@ export default function DrawingScreen() {
           <View className="flex flex-row items-center justify-center mt-8">
             <TouchableOpacity
               onPress={handleSubmit}
+              disabled={isPending}
               className="px-12 py-4 rounded-lg flex items-center bg-slate-700"
             >
-              <Text
-                className="text-gray-200 font-semibold"
-                disabled={isPending}
-              >
-                Submit
-              </Text>
+              <Text className="text-gray-200 font-semibold">Submit</Text>
             </TouchableOpacity>
           </View>
         </View>
