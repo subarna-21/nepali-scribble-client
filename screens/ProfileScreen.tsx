@@ -126,7 +126,9 @@ export default function ProfileScreen() {
                       <ActivityIndicator size="large" color="#0000ff" />
                     ) : profile.image ? (
                       <Image
-                        src={profile.image}
+                        source={{
+                          uri: profile.image,
+                        }}
                         className="w-20 h-20 rounded-full object-center object-cover"
                         width={128}
                         height={128}

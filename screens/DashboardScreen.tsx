@@ -165,7 +165,12 @@ export default function DashboardScreen() {
               <Text className="font-thin">No of Try: {data.noOfTry}</Text>
               <View className="flex flex-row gap-x-4">
                 <Text className="font-thin">Input:</Text>
-                <Image src={data.input} style={{ width: 100, height: 100 }} />
+                <Image
+                  source={{
+                    uri: data.input,
+                  }}
+                  style={{ width: 100, height: 100 }}
+                />
               </View>
               <Text className="font-thin">
                 Completed: {data.completed ? "Yes" : "No"}
